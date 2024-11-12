@@ -1,12 +1,12 @@
 import plistlib
 import subprocess
 from collections import deque
-from colorama import Fore, Back, Style
+from colorama import Fore, Style
 
 
 class StatsPrinter:
-    def __init__(self, size, rollup=False):
-        self.history = deque(maxlen=size)
+    def __init__(self, summary_size, rollup=False):
+        self.history = deque(maxlen=summary_size)
         self.rollup = rollup
 
     def feed(self, stats):
@@ -26,7 +26,7 @@ class StatsPrinter:
         }
 
     def print_headers(self, stats):
-        print(Style.BRIGHT, f" CPU{'':16} GPU{'':15} Total W{'':8} ", Style.NORMAL, end='')
+        print(Style.BRIGHT, f" CPU{'':16} GPU{'':15} Total W{'':9}", Style.NORMAL, end='')
         names = [cl['name'] for cl in stats['clusters']]
         names = [name[:-8] if name.endswith('-Cluster') else name for name in names]
         print(
@@ -65,7 +65,7 @@ class Powermetrics:
     def iter_plists(self):
         buffer = []
         for line in iter(self.process.stdout.readline, b''):
-            line = line.strip(b'\t\n \x00')
+            line = line.strip(b'\t\n\r \x00')
             buffer.append(line)
             if line == b"</plist>":
                 plist = b''.join(buffer)
@@ -78,14 +78,3 @@ class Powermetrics:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.process.stdout.close()
         self.process.wait()
-
-
-# subprocess.run('printf "\e[8;2;86t"', shell=True)
-printer = StatsPrinter(60, rollup=True)
-with Powermetrics() as powermetrics:
-    try:
-        for i, plist in enumerate(powermetrics.iter_plists()):
-            printer.feed(plist['processor'])
-    except KeyboardInterrupt:
-        pass
-    
