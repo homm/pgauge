@@ -25,7 +25,8 @@ parser.add_argument('-r', '--resize', type=parse_size, metavar="WxH",
                     help="Resize terminal window to this size. Could be 'auto'.")
 
 
-def main(args):
+def main():
+    args = parser.parse_args()
     if args.resize:
         subprocess.run('printf "\e[8;2;86t"', shell=True)
 
@@ -40,4 +41,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(parser.parse_args())
+    main()
