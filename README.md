@@ -56,6 +56,8 @@ Alternatively, you can run PGauge as a Python module:
 
       pgauge
     
+    <img src="https://raw.githubusercontent.com/homm/pgauge/master/static/default.png" width="682"/>
+    
 - **Set Update Interval to 500ms**
     
       pgauge -i 500
@@ -64,9 +66,13 @@ Alternatively, you can run PGauge as a Python module:
 
       pgauge -s 0
     
+    <img src="https://raw.githubusercontent.com/homm/pgauge/master/static/no_summary.png" width="395"/>
+    
 - **Keep History of All Updates**
 
       pgauge -k
+    
+    <img src="https://raw.githubusercontent.com/homm/pgauge/master/static/keep_history.png" width="682"/>
     
 - **Automatically Resize Terminal Window**
     
