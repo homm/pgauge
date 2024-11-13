@@ -27,10 +27,18 @@ parser.add_argument('-r', '--resize', type=parse_size, metavar="WxH",
 
 def main():
     args = parser.parse_args()
-    if args.resize:
-        subprocess.run('printf "\e[8;2;86t"', shell=True)
-
     summary_size = int(args.summary * 1000 / args.interval)
+
+    if args.resize:
+        if args.resize == True:
+            w, h = 96, 2
+            if args.keep_history:
+                h = 6
+            if not summary_size:
+                w = 55
+            args.resize = w, h
+        subprocess.run(f'printf "\e[8;{args.resize[1]};{args.resize[0]}t"', shell=True)
+
     printer = StatsPrinter(summary_size, rollup=args.keep_history)
     with Powermetrics(args.interval) as powermetrics:
         try:
