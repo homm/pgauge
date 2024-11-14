@@ -38,7 +38,7 @@ class StatsPrinter:
         names = [cl['name'] for cl in stats['clusters']]
         names = [name[:-8] if name.endswith('-Cluster') else name for name in names]
         print(
-            Style.BRIGHT, ", ".join(names), "GHz", Style.DIM + "utilization", Style.NORMAL,
+            Style.BRIGHT, ", ".join(names), "load,", Style.DIM + "GHz" + Style.NORMAL,
             end="" if self.rollup else None
         )
 
@@ -70,7 +70,7 @@ class StatsPrinter:
             for cl in stats['clusters']
         ]
         print(
-            *(f" {cl[0]:4.2f} {Style.DIM}{cl[1]:.0f}%{Style.NORMAL}" for cl in clusters),
+            *(f" {cl[1]:.0f}% {Style.DIM}{cl[0]:4.2f}{Style.NORMAL}" for cl in clusters),
             end=" ",
             flush=True
         )

@@ -5,6 +5,14 @@ the `powermetrics` command and displays them in a user-friendly format.
 It provides real-time CPU and GPU power usage statistics,
 helping you monitor your system's performance efficiently.
 
+Motivation
+
+While there are existing alternatives like MX Power Gadget, I found that
+they consume a significant amount of system resources themselves,
+which defeats the purpose of lightweight power monitoring.
+PGauge was developed as a more efficient solution that minimizes resource
+usage while providing accurate power metrics.
+
 
 ## Features
 
@@ -13,17 +21,20 @@ helping you monitor your system's performance efficiently.
 * **History Keeping**: Provides an option to keep a history of all updates.
 * **Automatic Terminal Resizing**: Adjusts the terminal window size for optimal display.
 
+
 ## Requirements
 
 * **Operating System**: macOS (Apple Silicon only)
 * **Permissions**: Administrator privileges (requires admin password)
 * **Python Version**: Python 3.8 or higher
 
+
 ## Installation
 
 Install PGauge using pip:
 
     pip install pgauge
+
 
 ## Usage
 
@@ -32,6 +43,7 @@ Install PGauge using pip:
 Alternatively, you can run PGauge as a Python module:
 
     python -m pgauge [-h] [-i mS] [-s S] [-k] [-r WxH]
+
 
 ### Optional Arguments
 
@@ -49,6 +61,7 @@ Alternatively, you can run PGauge as a Python module:
     
 - `-r WxH`, `--resize WxH`  
     Resize the terminal window to the specified width and height (`WxH`). You can also set it to `auto` for automatic resizing.
+
 
 ### Examples
 
@@ -77,6 +90,7 @@ Alternatively, you can run PGauge as a Python module:
 - **Automatically Resize Terminal Window**
     
       pgauge -r auto
+
 
 ## Important Notes
 
