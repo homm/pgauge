@@ -8,7 +8,8 @@ helping you monitor your system's performance efficiently.
 ## Motivation
 
 While there are existing alternatives like MX Power Gadget, I found that
-they consume a significant amount of system resources themselves,
+they consume a significant amount of system resources themselves
+([investigation](https://habr.com/ru/articles/858736/) in russian),
 which defeats the purpose of lightweight power monitoring.
 PGauge was developed as a more efficient solution that minimizes resource
 usage while providing accurate power metrics.
