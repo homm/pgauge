@@ -5,7 +5,7 @@ the `powermetrics` command and displays them in a user-friendly format.
 It provides real-time CPU and GPU power usage statistics,
 helping you monitor your system's performance efficiently.
 
-Motivation
+## Motivation
 
 While there are existing alternatives like MX Power Gadget, I found that
 they consume a significant amount of system resources themselves,
@@ -35,6 +35,10 @@ Install PGauge using pip:
 
     pip install pgauge
 
+Alternatively:
+
+    python3 -m pip install pgauge
+
 
 ## Usage
 
@@ -42,7 +46,7 @@ Install PGauge using pip:
 
 Alternatively, you can run PGauge as a Python module:
 
-    python -m pgauge [-h] [-i mS] [-s S] [-k] [-r WxH]
+    python3 -m pgauge [-h] [-i mS] [-s S] [-k] [-r WxH]
 
 
 ### Optional Arguments
