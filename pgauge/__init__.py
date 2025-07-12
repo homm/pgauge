@@ -63,7 +63,7 @@ class StatsPrinter:
             (
                 cl['freq_hz'] / 1e9,
                 sum(
-                    1 - cpu['idle_ratio']
+                    max(0, (1 - cpu['idle_ratio'] - cpu.get('down_ratio', 0)))
                     for cpu in cl['cpus']
                 ) / len(cl['cpus']) * 100,
             )
