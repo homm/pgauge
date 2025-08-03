@@ -1,11 +1,8 @@
-import plistlib
 import subprocess
 from collections import deque
 from colorama import Fore, Style
 
-
-def echo(*args):
-    print(*args, end='')
+from .parser import parse_plist_etree
 
 
 class StatsPrinter:
@@ -96,7 +93,9 @@ class StatsPrinter:
             cols.append('GPU')
         if stats['power']['total'] is not None:
             cols.append('Total W' if self.summary_size else 'Tot W')
-        echo(Style.BRIGHT + " ".join(col.ljust(padding) for col in cols) + Style.NORMAL + ' ')
+        print(
+            Style.BRIGHT + " ".join(col.ljust(padding) for col in cols)+ Style.NORMAL + ' ',
+            end='')
 
         names = [cpu['name'] for cpu in stats['cpu']]
         names = [name[:-8] if name.endswith('-Cluster') else name for name in names]
@@ -106,27 +105,27 @@ class StatsPrinter:
         )
 
     def print_stats(self, stats, summary):
-        echo('\n' if self.rollup else '\r\33[2K')
+        r = '\n' if self.rollup else '\r\33[2K'
 
         if stats['power']['cpu'] is not None:
-            echo(f"{stats['power']['cpu']:5.2f} ")
+            r += f"{stats['power']['cpu']:5.2f} "
             if summary:
-                echo(f"{Style.DIM}({Fore.GREEN}{summary['cpu'][0]:.2f}{Fore.RESET}"
+                r += (f"{Style.DIM}({Fore.GREEN}{summary['cpu'][0]:.2f}{Fore.RESET}"
                      f"...{Fore.RED}{summary['cpu'][1]:.2f}{Fore.RESET}){Style.NORMAL} ")
 
         if stats['power']['gpu'] is not None:
-            echo(f"{stats['power']['gpu']:5.2f} ")
+            r += f"{stats['power']['gpu']:5.2f} "
             if summary:
-                echo(f"{Style.DIM}({Fore.GREEN}{summary['gpu'][0]:.2f}{Fore.RESET}"
+                r += (f"{Style.DIM}({Fore.GREEN}{summary['gpu'][0]:.2f}{Fore.RESET}"
                      f"...{Fore.RED}{summary['gpu'][1]:.2f}{Fore.RESET}){Style.NORMAL} ")
 
         if stats['power']['total'] is not None:
-            echo(f"{Fore.MAGENTA}{stats['power']['total']:5.2f}{Fore.RESET} ")
+            r += f"{Fore.MAGENTA}{stats['power']['total']:5.2f}{Fore.RESET} "
             if summary:
-                echo(f"{Style.DIM}({Fore.GREEN}{summary['total'][0]:.2f}{Fore.RESET}"
+                r += (f"{Style.DIM}({Fore.GREEN}{summary['total'][0]:.2f}{Fore.RESET}"
                      f"...{Fore.RED}{summary['total'][1]:.2f}{Fore.RESET}){Style.NORMAL} ")
         print(
-            *(
+            r, *(
                 f" {cpu['load']:.0f}% {Style.DIM}{cpu['freq']:4.2f}{Style.NORMAL}"
                 for cpu in stats['cpu']
             ),
@@ -148,8 +147,7 @@ class Powermetrics:
             line = line.strip(b'\t\n\r \x00')
             buffer.append(line)
             if line == b"</plist>":
-                plist = b''.join(buffer)
-                yield plistlib.loads(plist)
+                yield parse_plist_etree(b''.join(buffer))
                 buffer.clear()
 
     def __enter__(self):
