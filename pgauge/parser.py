@@ -10,7 +10,7 @@ def parse_plist_etree(xml_bytes):
             it = iter(el)
             for key in it:
                 val = next(it)
-                if key.text == 'dvfm_states':
+                if key.text in ('c_states', 'duty_cycles', 'dvfm_states'):
                     continue
                 result[key.text] = parse_element(val)
             return result
