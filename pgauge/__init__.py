@@ -4,6 +4,10 @@ from collections import deque
 from colorama import Fore, Style
 
 
+def echo(*args):
+    print(*args, end='')
+
+
 class StatsPrinter:
     def __init__(self, summary_size, rollup=False):
         self.summary_size = summary_size
@@ -12,30 +16,91 @@ class StatsPrinter:
         self.headers_printed = False
 
     def feed(self, stats):
+        if 'clusters' in stats:
+            stats = self.convert_arm(stats)
+        else:
+            stats = self.convert_intel(stats)
         if not self.headers_printed:
             self.print_headers(stats)
         self.history.append(stats)
         self.print_stats(stats, self.power_summary())
 
+    def convert_arm(self, stats):
+        def pkg_freq(pkg):
+            freq = [
+                cpu['freq_hz']
+                for core in pkg['cores']
+                for cpu in core['cpus']
+            ]
+            return sum(freq) / len(freq)
+        return {
+            'power': {
+                'gpu': None,
+                'cpu': None,
+                'total': stats['package_watts'],
+            },
+            'cpu': [
+                {
+                    'name': f"P{i}",
+                    'freq': pkg_freq(pkg) / 1e9,
+                    'load': pkg['average_num_cores'] * 100 / len(pkg['cores']),
+                    'number': len(pkg['cores']),
+                }
+                for i, pkg in enumerate(stats['packages'])
+            ]
+        }
+
+    def convert_intel(self, stats):
+        def pkg_freq(pkg):
+            freq = [
+                cpu['freq_hz']
+                for core in pkg['cores']
+                for cpu in core['cpus']
+            ]
+            return sum(freq) / len(freq)
+        return {
+            'power': {
+                'gpu': None,
+                'cpu': None,
+                'total': stats['package_watts'],
+            },
+            'cpu': [
+                {
+                    'name': f"P{i}",
+                    'freq': pkg_freq(pkg) / 1e9,
+                    'load': pkg['average_num_cores'] * 100 / len(pkg['cores']),
+                    'number': len(pkg['cores']),
+                }
+                for i, pkg in enumerate(stats['packages'])
+            ]
+        }
+
     def power_summary(self):
         if not self.history:
             return None
         return {
-            'cpu_min': min(s['cpu_power'] for s in self.history),
-            'cpu_max': max(s['cpu_power'] for s in self.history),
-            'gpu_min': min(s['gpu_power'] for s in self.history),
-            'gpu_max': max(s['gpu_power'] for s in self.history),
-            'total_min': min(s['combined_power'] for s in self.history),
-            'total_max': max(s['combined_power'] for s in self.history),
+            metric: (
+                min(s['power'][metric] for s in self.history),
+                max(s['power'][metric] for s in self.history)
+            )
+            for metric in ['cpu', 'gpu', 'total']
+            if self.history[0]['power'][metric] is not None
         }
 
     def print_headers(self, stats):
         self.headers_printed = True
-        if self.summary_size:
-            print(Style.BRIGHT + f"CPU{'':16} GPU{'':16} Total W{'':12}" + Style.NORMAL, end='')
-        else:
-            print(Style.BRIGHT + f"CPU{'':2} GPU{'':2} Total W  " + Style.NORMAL, end='')
-        names = [cl['name'] for cl in stats['clusters']]
+
+        padding = 19 if self.summary_size else 6
+        cols = []
+        if stats['power']['cpu'] is not None:
+            cols.append('CPU')
+        if stats['power']['gpu'] is not None:
+            cols.append('GPU')
+        if stats['power']['total'] is not None:
+            cols.append('Total W' if self.summary_size else 'Tot W')
+        echo(Style.BRIGHT + " ".join(col.ljust(padding) for col in cols) + Style.NORMAL)
+
+        names = [cpu['name'] for cpu in stats['cpu']]
         names = [name[:-8] if name.endswith('-Cluster') else name for name in names]
         print(
             Style.BRIGHT, ", ".join(names), "load,", Style.DIM + "GHz" + Style.NORMAL,
@@ -43,34 +108,30 @@ class StatsPrinter:
         )
 
     def print_stats(self, stats, summary):
+        echo('\n' if self.rollup else '\r\33[2K')
+
+        if stats['power']['cpu'] is not None:
+            echo(f"{stats['power']['cpu']:5.2f} ")
+            if summary:
+                echo(f"{Style.DIM}({Fore.GREEN}{summary['cpu'][0]:.2f}{Fore.RESET}"
+                     f"...{Fore.RED}{summary['cpu'][1]:.2f}{Fore.RESET}){Style.NORMAL} ")
+
+        if stats['power']['gpu'] is not None:
+            echo(f"{stats['power']['gpu']:5.2f} ")
+            if summary:
+                echo(f"{Style.DIM}({Fore.GREEN}{summary['gpu'][0]:.2f}{Fore.RESET}"
+                     f"...{Fore.RED}{summary['gpu'][1]:.2f}{Fore.RESET}){Style.NORMAL} ")
+
+        if stats['power']['total'] is not None:
+            echo(f"{Fore.MAGENTA}{stats['power']['total']:5.2f}{Fore.RESET} ")
+            if summary:
+                echo(f"{Style.DIM}({Fore.GREEN}{summary['total'][0]:.2f}{Fore.RESET}"
+                     f"...{Fore.RED}{summary['total'][1]:.2f}{Fore.RESET}){Style.NORMAL}")
         print(
-            ('\n' if self.rollup else '\r\33[2K') +
-            f"{stats['cpu_power'] / 1000:5.2f} " +
-            (f"{Style.DIM}({Fore.GREEN}{summary['cpu_min'] / 1000:.2f}{Fore.RESET}"
-             f"...{Fore.RED}{summary['cpu_max'] / 1000:.2f}{Fore.RESET}){Style.NORMAL} "
-             if summary else '') +
-            f"{stats['gpu_power'] / 1000:5.2f} " +
-            (f"{Style.DIM}({Fore.GREEN}{summary['gpu_min'] / 1000:.2f}{Fore.RESET}"
-             f"...{Fore.RED}{summary['gpu_max'] / 1000:.2f}{Fore.RESET}){Style.NORMAL} "
-             if summary else '') +
-            f"{Fore.MAGENTA}{stats['combined_power'] / 1000:5.2f}{Fore.RESET} " +
-            (f"{Style.DIM}({Fore.GREEN}{summary['total_min'] / 1000:.2f}{Fore.RESET}"
-             f"...{Fore.RED}{summary['total_max'] / 1000:.2f}{Fore.RESET}){Style.NORMAL}"
-             if summary else ''),
-            end=" "
-        )
-        clusters = [
-            (
-                cl['freq_hz'] / 1e9,
-                sum(
-                    max(0, (1 - cpu['idle_ratio'] - cpu.get('down_ratio', 0)))
-                    for cpu in cl['cpus']
-                ) / len(cl['cpus']) * 100,
-            )
-            for cl in stats['clusters']
-        ]
-        print(
-            *(f" {cl[1]:.0f}% {Style.DIM}{cl[0]:4.2f}{Style.NORMAL}" for cl in clusters),
+            *(
+                f" {cpu['load']:.0f}% {Style.DIM}{cpu['freq']:4.2f}{Style.NORMAL}"
+                for cpu in stats['cpu']
+            ),
             end=" ",
             flush=True
         )
