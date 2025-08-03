@@ -26,27 +26,25 @@ class StatsPrinter:
         self.print_stats(stats, self.power_summary())
 
     def convert_arm(self, stats):
-        def pkg_freq(pkg):
-            freq = [
-                cpu['freq_hz']
-                for core in pkg['cores']
-                for cpu in core['cpus']
-            ]
-            return sum(freq) / len(freq)
+        import pprint
+        pprint.pp(stats)
         return {
             'power': {
-                'gpu': None,
-                'cpu': None,
-                'total': stats['package_watts'],
+                'cpu': stats['cpu_power'] / 1000,
+                'gpu': stats['gpu_power'] / 1000,
+                'total': stats['combined_power'] / 1000,
             },
             'cpu': [
                 {
-                    'name': f"P{i}",
-                    'freq': pkg_freq(pkg) / 1e9,
-                    'load': pkg['average_num_cores'] * 100 / len(pkg['cores']),
-                    'number': len(pkg['cores']),
+                    'name': cl['name'],
+                    'freq': cl['freq_hz'] / 1e9,
+                    'load': sum(
+                        max(0, (1 - cpu['idle_ratio'] - cpu.get('down_ratio', 0)))
+                        for cpu in cl['cpus']
+                    ) * 100 / len(cl['cpus']),
+                    'number': len(cl['cpus']),
                 }
-                for i, pkg in enumerate(stats['packages'])
+                for cl in stats['clusters']
             ]
         }
 
@@ -60,8 +58,8 @@ class StatsPrinter:
             return sum(freq) / len(freq)
         return {
             'power': {
-                'gpu': None,
                 'cpu': None,
+                'gpu': None,
                 'total': stats['package_watts'],
             },
             'cpu': [
@@ -90,7 +88,7 @@ class StatsPrinter:
     def print_headers(self, stats):
         self.headers_printed = True
 
-        padding = 19 if self.summary_size else 6
+        padding = 19 if self.summary_size else 5
         cols = []
         if stats['power']['cpu'] is not None:
             cols.append('CPU')
@@ -98,7 +96,7 @@ class StatsPrinter:
             cols.append('GPU')
         if stats['power']['total'] is not None:
             cols.append('Total W' if self.summary_size else 'Tot W')
-        echo(Style.BRIGHT + " ".join(col.ljust(padding) for col in cols) + Style.NORMAL)
+        echo(Style.BRIGHT + " ".join(col.ljust(padding) for col in cols) + Style.NORMAL + ' ')
 
         names = [cpu['name'] for cpu in stats['cpu']]
         names = [name[:-8] if name.endswith('-Cluster') else name for name in names]
@@ -126,7 +124,7 @@ class StatsPrinter:
             echo(f"{Fore.MAGENTA}{stats['power']['total']:5.2f}{Fore.RESET} ")
             if summary:
                 echo(f"{Style.DIM}({Fore.GREEN}{summary['total'][0]:.2f}{Fore.RESET}"
-                     f"...{Fore.RED}{summary['total'][1]:.2f}{Fore.RESET}){Style.NORMAL}")
+                     f"...{Fore.RED}{summary['total'][1]:.2f}{Fore.RESET}){Style.NORMAL} ")
         print(
             *(
                 f" {cpu['load']:.0f}% {Style.DIM}{cpu['freq']:4.2f}{Style.NORMAL}"
