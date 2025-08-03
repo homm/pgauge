@@ -25,7 +25,7 @@ usage while providing accurate power metrics.
 
 ## Requirements
 
-* **Operating System**: macOS (Apple Silicon only)
+* **Operating System**: macOS (Apple Silicon and Intel)
 * **Permissions**: Administrator privileges (requires admin password)
 * **Python Version**: Python 3.8 or higher
 
@@ -105,5 +105,3 @@ Alternatively, you can run PGauge as a Python module:
   to run `powermetrics` without a password by running the following command:
 
       echo `whoami` "ALL=(ALL) NOPASSWD: /usr/bin/powermetrics *" | sudo tee /etc/sudoers.d/powermetrics
-
-* **macOS Only**: This utility is designed to work exclusively on macOS systems with Apple architecture.
