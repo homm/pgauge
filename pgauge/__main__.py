@@ -23,6 +23,8 @@ parser.add_argument('-k', '--keep-history', action='store_true',
                     help="Print each update on a new line.")
 parser.add_argument('-r', '--resize', type=parse_size, metavar="WxH",
                     help="Resize terminal window to this size. Could be 'auto'.")
+parser.add_argument('-p', '--per-core-load', action='store_true',
+                    help="Do not scale cores load to number of cores (one core is 100%%).")
 
 
 def main():
@@ -39,7 +41,8 @@ def main():
             args.resize = w, h
         subprocess.run(f'printf "\e[8;{args.resize[1]};{args.resize[0]}t"', shell=True)
 
-    printer = StatsPrinter(summary_size, rollup=args.keep_history)
+    printer = StatsPrinter(
+        summary_size, rollup=args.keep_history, per_core_load=args.per_core_load)
     with Powermetrics(args.interval) as powermetrics:
         try:
             for plist in powermetrics.iter_plists():

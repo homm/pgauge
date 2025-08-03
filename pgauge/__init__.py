@@ -9,10 +9,11 @@ def echo(*args):
 
 
 class StatsPrinter:
-    def __init__(self, summary_size, rollup=False):
+    def __init__(self, summary_size, rollup=False, per_core_load=False):
         self.summary_size = summary_size
         self.history = deque(maxlen=summary_size)
         self.rollup = rollup
+        self.per_core_load = per_core_load
         self.headers_printed = False
 
     def feed(self, stats):
@@ -26,8 +27,6 @@ class StatsPrinter:
         self.print_stats(stats, self.power_summary())
 
     def convert_arm(self, stats):
-        import pprint
-        pprint.pp(stats)
         return {
             'power': {
                 'cpu': stats['cpu_power'] / 1000,
@@ -41,7 +40,7 @@ class StatsPrinter:
                     'load': sum(
                         max(0, (1 - cpu['idle_ratio'] - cpu.get('down_ratio', 0)))
                         for cpu in cl['cpus']
-                    ) * 100 / len(cl['cpus']),
+                    ) * 100 / (1 if self.per_core_load else len(cl['cpus'])),
                     'number': len(cl['cpus']),
                 }
                 for cl in stats['clusters']
@@ -66,7 +65,8 @@ class StatsPrinter:
                 {
                     'name': f"P{i}",
                     'freq': pkg_freq(pkg) / 1e9,
-                    'load': pkg['average_num_cores'] * 100 / len(pkg['cores']),
+                    'load': pkg['average_num_cores'] * 100 /
+                        (1 if self.per_core_load else len(pkg['cores'])),
                     'number': len(pkg['cores']),
                 }
                 for i, pkg in enumerate(stats['packages'])
