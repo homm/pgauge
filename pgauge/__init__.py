@@ -126,7 +126,7 @@ class StatsPrinter:
                      f"...{Fore.RED}{summary['total'][1]:.2f}{Fore.RESET}){Style.NORMAL} ")
         print(
             r, *(
-                f" {cpu['load']:.0f}% {Style.DIM}{cpu['freq']:4.2f}{Style.NORMAL}"
+                f"{cpu['load']:.0f}% {Style.DIM}{cpu['freq']:4.2f}{Style.NORMAL} "
                 for cpu in stats['cpu']
             ),
             end=" ",
